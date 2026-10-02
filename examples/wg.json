@@ -1,0 +1,44 @@
+{
+  "log": { "level": "warn", "timestamp": true },
+  "dns": {
+    "servers": [
+      { "type": "local", "tag": "local" },
+      { "type": "https", "tag": "doh", "server": "1.1.1.1" }
+    ],
+    "final": "doh",
+    "strategy": "ipv4_only"
+  },
+  "inbounds": [
+    { "type": "mixed", "tag": "in", "listen": "0.0.0.0", "listen_port": 1080 }
+  ],
+  "endpoints": [
+    {
+      "type": "wireguard",
+      "tag": "wg",
+      "mtu": 1280,
+      "address": ["10.0.0.2/32"],
+      "private_key": "YOUR_PRIVATE_KEY",
+      "peers": [
+        {
+          "address": "203.0.113.10",
+          "port": 51820,
+          "public_key": "PEER_PUBLIC_KEY",
+          "allowed_ips": ["0.0.0.0/0", "::/0"]
+        }
+      ]
+    }
+  ],
+  "outbounds": [
+    { "type": "direct", "tag": "direct" }
+  ],
+  "route": {
+    "default_domain_resolver": { "server": "local" },
+    "rules": [
+      { "action": "sniff" },
+      { "protocol": "dns", "action": "hijack-dns" },
+      { "ip_is_private": true, "action": "route", "outbound": "direct" },
+      { "domain_suffix": ["example.com", "example.org"], "action": "route", "outbound": "wg" }
+    ],
+    "final": "direct"
+  }
+}
