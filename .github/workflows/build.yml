@@ -1,6 +1,6 @@
 name: build
 
-# Запуск: вкладка Actions -> build -> Run workflow (или любой push в main)
+# Run: Actions tab -> build -> Run workflow (or any push to main)
 on:
   workflow_dispatch:
   push:
@@ -45,5 +45,5 @@ jobs:
         run: |
           ls -l dist
           gh release view v1.14.2 >/dev/null 2>&1 || \
-            gh release create v1.14.2 --title "v1.14.2" --notes "Бинарники на базе исходников sing-box v1.14.2. Описание и отказ от претензий: см. README."
+            gh release create v1.14.2 --title "v1.14.2" --notes "Unofficial slim static binaries built from the sing-box v1.14.2 source. Not affiliated with the sing-box authors. See README for variants, architectures and the disclaimer."
           gh release upload v1.14.2 dist/* --clobber
