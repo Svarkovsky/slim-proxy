@@ -1,58 +1,59 @@
 # slim-proxy
 
-Урезанные статические сборки прокси на базе исходного кода
-[sing-box](https://github.com/SagerNet/sing-box) **v1.14.2** для роутеров и
-слабых устройств.
+Slim static builds of a proxy based on the
+[sing-box](https://github.com/SagerNet/sing-box) **v1.14.2** source code,
+for routers and other low-resource devices.
 
-> Это **неофициальная** сборка. Проект не связан с авторами sing-box и
-> не одобрен ими. По условию лицензии sing-box производные работы не могут
-> использовать его название, поэтому здесь другое имя.
+> This is an **unofficial** build. It is not affiliated with or endorsed by
+> the sing-box authors. The sing-box license does not allow derivative works
+> to use its name, so this project uses a different one.
 
-## Зачем это нужно
+## Why
 
-Обычная сборка sing-box 1.14.2 весит около 44 МБ: в неё входят десятки
-протоколов, gRPC API, Tailscale, OpenVPN и прочее. На роутере с 64–128 МБ ОЗУ
-и небольшой флешкой это слишком много.
+The stock sing-box 1.14.2 build is about 44 MB. It includes dozens of
+protocols, a gRPC API, Tailscale, OpenVPN and more. That is too much for a
+router with 64–128 MB of RAM and a small flash chip.
 
-Здесь оставлено только то, что нужно «умному маршрутизатору трафика»:
+These builds keep only what a "smart traffic router" needs:
 
-| Что есть | Чего нет |
+| Included | Removed |
 |---|---|
-| Входящие: `mixed` (SOCKS5 + HTTP), `socks` | tun, redirect/tproxy |
-| Исходящие: `direct`, `block` | shadowsocks, vmess, vless, trojan, hysteria и др. |
-| Endpoint: `wireguard` (только вариант `wg`) | tailscale, openvpn, openconnect |
+| Inbounds: `mixed` (SOCKS5 + HTTP), `socks` | tun, redirect/tproxy |
+| Outbounds: `direct`, `block` | shadowsocks, vmess, vless, trojan, hysteria, etc. |
+| Endpoint: `wireguard` (`wg` variant only) | tailscale, openvpn, openconnect |
 | DNS: local, udp, tcp, tls (DoT), https (DoH) | DoQ/DoH3, DHCP, fakeip, mDNS |
-| Правила маршрутизации, rule-set, фрагментация TLS | API, Clash API, сервисы |
-| Команды: `run`, `check`, `format`, `version` | `api`, `tools`, `geoip`, `rule-set` и др. |
+| Routing rules, rule-sets, TLS fragmentation | API, Clash API, services |
+| Commands: `run`, `check`, `format`, `version` | `api`, `tools`, `geoip`, `rule-set`, etc. |
 
-## Какой файл скачать
+## Which file to download
 
-Файлы лежат в разделе **Releases**. Имя файла: `slim-proxy-1.14.2-<вариант>-linux-<архитектура>`.
+Files are in **Releases**. File name: `slim-proxy-1.14.2-<variant>-linux-<arch>`.
 
-**Вариант:**
-- `wg` — со встроенным WireGuard (userspace, через gVisor). Нужен, если
-  туннель WireGuard поднимает сама программа, а модуля WireGuard в ядре нет.
-- `lowmem` — без WireGuard, с уменьшенными буферами. Для случая, когда
-  программа только раскидывает трафик по `direct` и `block`. Примерно на 4 МБ
-  меньше и экономнее по памяти.
+**Variant:**
+- `wg`: with built-in WireGuard (userspace, via gVisor). Use it when the
+  program itself brings up the WireGuard tunnel and the kernel has no
+  WireGuard module.
+- `lowmem`: no WireGuard, smaller buffers. Use it when the program only
+  dispatches traffic to `direct` and `block`. About 4 MB smaller and uses
+  less RAM.
 
-**Архитектура:**
+**Architecture:**
 
-| Архитектура | Устройства |
+| Arch | Devices |
 |---|---|
-| `mips` | MIPS big-endian: Qualcomm Atheros (QCA95xx), например ASUS RT-AC57U V3 |
+| `mips` | MIPS big-endian: Qualcomm Atheros (QCA95xx), e.g. ASUS RT-AC57U V3 |
 | `mipsle` | MIPS little-endian: MediaTek/Ralink MT7620, MT7621, MT7628 (Xiaomi, Keenetic, TP-Link) |
-| `armv7` | 32-битный ARM: старые Raspberry Pi, роутеры на Cortex-A7 |
-| `arm64` | 64-битный ARM: Raspberry Pi 3/4/5, роутеры на Cortex-A53/A72 |
-| `amd64` | Обычные x86_64 ПК, серверы, VPS |
+| `armv7` | 32-bit ARM: older Raspberry Pi boards, Cortex-A7 routers |
+| `arm64` | 64-bit ARM: Raspberry Pi 3/4/5, Cortex-A53/A72 routers |
+| `amd64` | Standard x86_64 PCs, servers, VPS |
 
-Все бинарники статические (без libc), им неважно, что стоит в системе:
-musl, glibc или uClibc. Нужно ядро Linux **3.2 или новее**.
+All binaries are fully static (no libc), so they work with musl, glibc or
+uClibc alike. Linux kernel **3.2 or newer** is required.
 
-Не знаете архитектуру? Выполните на устройстве `uname -m` и
-`grep -m1 -i endian /proc/cpuinfo 2>/dev/null`.
+Not sure about your architecture? Run `uname -m` and
+`grep -m1 -i endian /proc/cpuinfo 2>/dev/null` on the device.
 
-## Как пользоваться
+## Usage
 
 ```sh
 chmod +x slim-proxy-1.14.2-lowmem-linux-mipsle
@@ -60,49 +61,50 @@ chmod +x slim-proxy-1.14.2-lowmem-linux-mipsle
 ./slim-proxy-1.14.2-lowmem-linux-mipsle run -c config.json
 ```
 
-Формат конфига тот же, что у sing-box 1.14:
-[документация sing-box](https://sing-box.sagernet.org/configuration/).
+The configuration format is the same as sing-box 1.14:
+[sing-box documentation](https://sing-box.sagernet.org/configuration/).
 
-Советы для роутеров:
-- Не сжимайте бинарник UPX: при запуске он целиком распакуется в ОЗУ,
-  и памяти уйдёт больше.
-- По возможности храните бинарник на USB или `/jffs`, а не в `/tmp`
-  (`/tmp` находится в ОЗУ).
+Router tips:
+- Do not compress the binary with UPX: it is fully unpacked into RAM at
+  startup, so it uses more memory, not less.
+- If possible, keep the binary on USB storage or `/jffs` rather than `/tmp`
+  (`/tmp` lives in RAM).
 
-## Как собрать
+## Building
 
-Сборка идёт автоматически в GitHub Actions: вкладка **Actions** → **build** →
-**Run workflow**. Через несколько минут файлы появятся в **Releases**.
+Builds run automatically in GitHub Actions: **Actions** → **build** →
+**Run workflow**. After a few minutes the files appear in **Releases**.
 
-Собрать вручную (нужен Go 1.26+):
+Manual build (requires Go 1.26+):
 
 ```sh
-./build.sh lowmem mipsle    # вариант и архитектура
-./build.sh source           # архив исходников с наложенным патчем
+./build.sh lowmem mipsle    # variant and architecture
+./build.sh source           # source archive with the patch applied
 ```
 
-Что делает сборка: скачивает исходники sing-box v1.14.2, заменяет
-`include/registry.go` (оставляет нужные протоколы) и добавляет облегчённую
-командную строку `cmd/lite`. Все изменения лежат в папке `patch/`.
+What the build does: downloads the sing-box v1.14.2 source, replaces
+`include/registry.go` (keeping only the needed protocols) and adds a
+lightweight command line in `cmd/lite`. All changes are in the `patch/`
+folder.
 
-## Отказ от ответственности
+## Disclaimer
 
-Программа распространяется **«как есть», без каких-либо гарантий**, явных
-или подразумеваемых, в том числе гарантий пригодности для определённой цели.
-Вы используете её на свой страх и риск. Автор сборки не несёт
-ответственности за любой ущерб, потерю данных, неработоспособность
-устройства или последствия использования, а также за соблюдение вами законов
-вашей страны. Претензии по работе программы к авторам sing-box не
-направляйте: эта сборка неофициальная.
+This software is provided **"as is", without warranty of any kind**,
+express or implied, including but not limited to the warranties of
+merchantability and fitness for a particular purpose. You use it entirely
+at your own risk. The author of these builds is not liable for any damage,
+data loss, device malfunction or other consequences of its use, nor for
+your compliance with the laws of your country. Do not send issues about
+these builds to the sing-box authors: they are unofficial.
 
-## Лицензия
+## License
 
-Как и исходный проект, распространяется по лицензии
-**GNU GPL v3.0 или более поздней** с дополнительным условием автора sing-box:
-см. [LICENSE](LICENSE) и полный текст GPL в [COPYING](COPYING).
+Like the upstream project, this is distributed under the
+**GNU GPL v3.0 or later**, with the additional term set by the sing-box
+author: see [LICENSE](LICENSE) and the full GPL text in [COPYING](COPYING).
 
-Исходный код: sing-box © 2022 nekohasekai,
-<https://github.com/SagerNet/sing-box>. Изменения в папке `patch/` и скрипты
-сборки распространяются на тех же условиях. Полный исходный код, из которого
-собраны бинарники, прикладывается к каждому релизу
+Upstream source: sing-box © 2022 nekohasekai,
+<https://github.com/SagerNet/sing-box>. The changes in `patch/` and the
+build scripts are distributed under the same terms. The complete
+corresponding source code is attached to every release
 (`slim-proxy-1.14.2-source.tar.gz`).
